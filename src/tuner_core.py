@@ -33,14 +33,4 @@ class RababString:
             return "Sharp, tune down."
 
 
-rabab_strings = [
-    RababString("Sa", 261.63),       
-    RababString("Re", 293.66),       
-    RababString("Ga", 329.63),      
-    RababString("Ma", 349.23),     
-    RababString("Pa", 392.00),      
-    RababString("Dha", 440.00),     
-    RababString("Ni", 493.88),       
-    RababString("Sa (upper)", 523.25) 
-]
 
