@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rabab Tuner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f4f8;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        h2 {
+            margin-bottom: 24px;
+            font-size: 2rem;
+            color: #1a1a1a;
+        }
+
+        select, button {
+            padding: 10px 16px;
+            margin: 10px 5px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        select {
+            background-color: white;
+            min-width: 180px;
+        }
+
+        button {
+            background-color: #0052cc;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #003d99;
+        }
+
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Rabab Tuner</h2>
+
+    <select id="noteSelect">
+        <option value="Sa">Sa</option>
+        <option value="Re">Re</option>
+        <option value="Ga">Ga</option>
+        <option value="Ma">Ma</option>
+        <option value="Pa">Pa</option>
+        <option value="Dha">Dha</option>
+        <option value="Ni">Ni</option>
+        <option value="Sa (upper)">Sa (upper)</option>
+    </select>
+
+    <div>
+        <button id="startBtn" type="button">Start Recording</button>
+        <button id="stopBtn" type="button">Stop & Analyze</button>
+    </div>
+
+    <div id="result">Status: Waiting...</div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        document.getElementById("startBtn").addEventListener("click", async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" });
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+
+                mediaRecorder.onstart = () => {
+                    document.getElementById("result").textContent = "Recording...";
+                };
+
+                mediaRecorder.start();
+            } catch (err) {
+                document.getElementById("result").textContent = "Microphone error: " + err.message;
+            }
+        });
+
+        document.getElementById("stopBtn").addEventListener("click", async () => {
+            try {
+                if (!mediaRecorder || mediaRecorder.state !== "recording") return;
+
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const formData = new FormData();
+                    const note = document.getElementById("noteSelect").value;
+
+                    formData.append("file", blob, "audio.webm");
+                    formData.append("note", note);
+
+                    const res = await fetch("http://127.0.0.1:5000/analyze", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.text();
+                        document.getElementById("result").textContent = " Server error: " + err;
+                        return;
+                    }
+
+                    const data = await res.json();
+                    document.getElementById("result").textContent =
+                        `${data.note} → ${data.detected_freq} Hz → ${data.status}`;
+                };
+
+                mediaRecorder.stop();
+            } catch (err) {
+                document.getElementById("result").textContent = "Error: " + err.message;
+            }
+        });
+    </script>
+</body>
+</html>
