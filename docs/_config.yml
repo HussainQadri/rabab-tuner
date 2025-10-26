@@ -1,5 +1,5 @@
-title: Rabab Tuner Blog
-description: Weekly development updates on building a Python-based Rabab tuner using FFT and sound analysis.
+title: Rubab Tuner Blog
+description: Weekly development updates on building a Python-based Rabab tuner using FFT and other pitch analysis techniques.
 theme: jekyll-theme-midnight
 markdown: kramdown
 show_downloads: false
