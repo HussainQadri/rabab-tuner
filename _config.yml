@@ -1,6 +1,6 @@
 title: Rabab Tuner Blog
 description: Weekly development updates on building a Python-based Rabab tuner using FFT and sound analysis.
-theme: minima
+theme: jekyll-theme-midnight
 markdown: kramdown
 show_downloads: false
 author: Hussain Qadri
