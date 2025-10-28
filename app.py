@@ -2,8 +2,31 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pydub import AudioSegment
 from src.tuner_core import RababString, StringInstrument, FrequencyDetector
+import platform
+import os
+from pydub import AudioSegment
+from pydub.utils import which
 
-AudioSegment.converter = "C:/ffmpeg/bin/ffmpeg.exe"
+
+ffmpeg_path = which("ffmpeg")
+ffprobe_path = which("ffprobe")
+
+if not ffmpeg_path:
+    system = platform.system()
+    if system == "Darwin":  # macOS
+        ffmpeg_path = "/opt/homebrew/bin/ffmpeg"
+        ffprobe_path = "/opt/homebrew/bin/ffprobe"
+    elif system == "Windows":
+        ffmpeg_path = "C:/ffmpeg/bin/ffmpeg.exe"
+        ffprobe_path = "C:\\Program Files\\ffmpeg\\bin\\ffprobe.exe"
+
+AudioSegment.converter = ffmpeg_path
+AudioSegment.ffprobe = ffprobe_path
+
+print(f"[DEBUG] Using ffmpeg at: {ffmpeg_path}")
+print(f"[DEBUG] Using ffprobe at: {ffprobe_path}")
+
+
 
 app = Flask(__name__)
 CORS(app)
