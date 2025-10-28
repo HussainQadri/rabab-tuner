@@ -1,140 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Rabab Tuner</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #f4f4f8;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 20px;
-        }
+  <meta charset="UTF-8">
+  <title>Rabab Tuner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        h2 {
-            margin-bottom: 24px;
-            font-size: 2rem;
-            color: #1a1a1a;
-        }
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-        select, button {
-            padding: 10px 16px;
-            margin: 10px 5px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
+  <style>
+    :root {
+      --bg: #0e1117;
+      --card: #1b1f27;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text: #e5e7eb;
+      --subtle: #9ca3af;
+      --radius: 14px;
+      --transition: 0.25s ease;
+    }
 
-        select {
-            background-color: white;
-            min-width: 180px;
-        }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at top, #111827, #0e1117);
+      font-family: "Inter", sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+    }
 
-        button {
-            background-color: #0052cc;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
+    h2 {
+      font-size: 2.2rem;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.5px;
+    }
 
-        button:hover {
-            background-color: #003d99;
-        }
+    .card {
+      background: var(--card);
+      padding: 2rem 2.5rem;
+      border-radius: var(--radius);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      width: 90%;
+      max-width: 420px;
+    }
 
-        #result {
-            margin-top: 30px;
-            padding: 20px;
-            background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            font-size: 18px;
-        }
-    </style>
+    select {
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 10px 14px;
+      font-size: 16px;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    select:focus {
+      border-color: var(--accent);
+    }
+
+    button {
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius);
+      color: white;
+      padding: 10px 18px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    #result {
+      margin-top: 1rem;
+      background: #111827;
+      border-radius: var(--radius);
+      padding: 1rem 1.5rem;
+      width: 100%;
+      text-align: center;
+      font-size: 1rem;
+      color: var(--subtle);
+      transition: var(--transition);
+      border: 1px solid #1f2937;
+      box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+    }
+
+    #result.active {
+      color: #10b981;
+      font-weight: 500;
+    }
+
+    .waveform {
+      position: relative;
+      width: 100%;
+      height: 60px;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .bar {
+      width: 4px;
+      height: 30px;
+      background: var(--accent);
+      border-radius: 2px;
+      opacity: 0.5;
+      animation: wave 1s ease-in-out infinite;
+    }
+
+    @keyframes wave {
+      0%, 100% { transform: scaleY(0.4); opacity: 0.4; }
+      50% { transform: scaleY(1.2); opacity: 1; }
+    }
+
+    .bar:nth-child(1) { animation-delay: 0s; }
+    .bar:nth-child(2) { animation-delay: 0.1s; }
+    .bar:nth-child(3) { animation-delay: 0.2s; }
+    .bar:nth-child(4) { animation-delay: 0.3s; }
+    .bar:nth-child(5) { animation-delay: 0.4s; }
+    .bar:nth-child(6) { animation-delay: 0.5s; }
+    .bar:nth-child(7) { animation-delay: 0.6s; }
+    .bar:nth-child(8) { animation-delay: 0.7s; }
+    .bar:nth-child(9) { animation-delay: 0.8s; }
+    .bar:nth-child(10) { animation-delay: 0.9s; }
+
+    .waveform.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    footer {
+      margin-top: 2rem;
+      color: #6b7280;
+      font-size: 0.85rem;
+    }
+  </style>
 </head>
 <body>
-    <h2>Rabab Tuner</h2>
+  <h2>🎵 Rabab Tuner</h2>
 
+  <div class="card">
     <select id="noteSelect">
-        <option value="Sa">Sa</option>
-        <option value="Re">Re</option>
-        <option value="Ga">Ga</option>
-        <option value="Ma">Ma</option>
-        <option value="Pa">Pa</option>
-        <option value="Dha">Dha</option>
-        <option value="Ni">Ni</option>
-        <option value="Sa (upper)">Sa (upper)</option>
+      <option value="Sa">Sa</option>
+      <option value="Re">Re</option>
+      <option value="Ga">Ga</option>
+      <option value="Ma">Ma</option>
+      <option value="Pa">Pa</option>
+      <option value="Dha">Dha</option>
+      <option value="Ni">Ni</option>
+      <option value="Sa (upper)">Sa (upper)</option>
     </select>
 
     <div>
-        <button id="startBtn" type="button">Start Recording</button>
-        <button id="stopBtn" type="button">Stop & Analyze</button>
+      <button id="startBtn">Start Recording</button>
+      <button id="stopBtn">Stop & Analyze</button>
+    </div>
+
+    <!-- Glowing waveform animation -->
+    <div class="waveform hidden" id="waveform">
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
     </div>
 
     <div id="result">Status: Waiting...</div>
+  </div>
 
-    <script>
-        let mediaRecorder;
-        let audioChunks = [];
+  <footer>Made with ❤️ for Rabab players</footer>
 
-        document.getElementById("startBtn").addEventListener("click", async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" });
-                audioChunks = [];
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+    const waveform = document.getElementById("waveform");
+    const resultBox = document.getElementById("result");
 
-                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+    document.getElementById("startBtn").addEventListener("click", async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" });
+        audioChunks = [];
+        waveform.classList.remove("hidden");
 
-                mediaRecorder.onstart = () => {
-                    document.getElementById("result").textContent = "Recording...";
-                };
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstart = () => resultBox.textContent = "Recording...";
+        mediaRecorder.start();
+      } catch (err) {
+        resultBox.textContent = "Microphone error: " + err.message;
+      }
+    });
 
-                mediaRecorder.start();
-            } catch (err) {
-                document.getElementById("result").textContent = "Microphone error: " + err.message;
-            }
-        });
+    document.getElementById("stopBtn").addEventListener("click", async () => {
+      if (!mediaRecorder || mediaRecorder.state !== "recording") return;
+      waveform.classList.add("hidden");
 
-        document.getElementById("stopBtn").addEventListener("click", async () => {
-            try {
-                if (!mediaRecorder || mediaRecorder.state !== "recording") return;
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(audioChunks, { type: "audio/webm" });
+        const formData = new FormData();
+        const note = document.getElementById("noteSelect").value;
+        formData.append("file", blob, "audio.webm");
+        formData.append("note", note);
 
-                mediaRecorder.onstop = async () => {
-                    const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                    const formData = new FormData();
-                    const note = document.getElementById("noteSelect").value;
-
-                    formData.append("file", blob, "audio.webm");
-                    formData.append("note", note);
-
-                    const res = await fetch("http://127.0.0.1:5000/analyze", {
-                        method: "POST",
-                        body: formData
-                    });
-
-                    if (!res.ok) {
-                        const err = await res.text();
-                        document.getElementById("result").textContent = " Server error: " + err;
-                        return;
-                    }
-
-                    const data = await res.json();
-                    document.getElementById("result").textContent =
-                        `${data.note} → ${data.detected_freq} Hz → ${data.status}`;
-                };
-
-                mediaRecorder.stop();
-            } catch (err) {
-                document.getElementById("result").textContent = "Error: " + err.message;
-            }
-        });
-    </script>
+        resultBox.textContent = "Analyzing...";
+        try {
+          const res = await fetch("http://127.0.0.1:5000/analyze", { method: "POST", body: formData });
+          if (!res.ok) throw new Error(await res.text());
+          const data = await res.json();
+          resultBox.classList.add("active");
+          resultBox.textContent = `${data.note} → ${data.detected_freq} Hz → ${data.status}`;
+        } catch (err) {
+          resultBox.textContent = "Server error: " + err.message;
+        }
+      };
+      mediaRecorder.stop();
+    });
+  </script>
 </body>
 </html>
