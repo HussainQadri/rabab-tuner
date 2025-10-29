@@ -40,10 +40,12 @@ body, html, #root {
   background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 20px rgba(147, 197, 253, 0.15);
+  text-shadow: 0 0 20px rgba(147,197,253,0.15);
   word-break: break-word;
   max-width: 90%;
+  white-space: nowrap;
 }
+
 
 .cursor {
   color: #a78bfa;
