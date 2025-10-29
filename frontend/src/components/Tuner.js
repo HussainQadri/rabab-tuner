@@ -70,7 +70,8 @@ export default function Tuner() {
         formData.append("note", "Sa");
 
         try {
-          const res = await fetch("http://127.0.0.1:5000/analyze", {
+          const res = await fetch("https://rabab-tuner.onrender.com/analyze", {
+
             method: "POST",
             body: formData,
           });
