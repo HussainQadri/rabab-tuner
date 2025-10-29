@@ -1,0 +1,7 @@
+Flask
+flask-cors
+pydub
+gunicorn
+numpy
+sounddevice
+gunicorn
