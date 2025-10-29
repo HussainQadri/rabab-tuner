@@ -41,10 +41,11 @@ body, html, #root {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 0 20px rgba(147,197,253,0.15);
-  word-break: break-word;
-  max-width: 90%;
   white-space: nowrap;
 }
+
+
+
 
 
 .cursor {
