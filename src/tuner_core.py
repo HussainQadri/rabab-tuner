@@ -37,19 +37,8 @@ class RababString:
 
 
 class FrequencyDetector:
-    def __init__(self, samplerate=44100, duration=1.0):
-        self.samplerate = samplerate
-        self.duration = duration
-
-    def detect_frequency(self):
-        audio = sd.rec(int(self.duration * self.samplerate), samplerate=self.samplerate, channels=1)
-        sd.wait()
-        signal = audio.flatten()
-        windowed = signal * np.hanning(len(signal))
-        spectrum = np.fft.rfft(windowed)
-        freqs = np.fft.rfftfreq(len(windowed), 1 / self.samplerate)
-        magnitude = np.abs(spectrum)
-        return freqs[np.argmax(magnitude)]
+    def __init__(self):
+        pass
 
     def detect_from_blob(self, audio_blob):
         audio = AudioSegment.from_file(io.BytesIO(audio_blob))
