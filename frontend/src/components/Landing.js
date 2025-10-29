@@ -4,7 +4,7 @@ import { FaGithub } from "react-icons/fa";
 
 export default function Landing({ onStart }) {
   const [displayed, setDisplayed] = useState("");
-  const fullText = "Let's get your Rabab tuned.";
+  const fullText = "Hello, Let's get your Rabab tuned.";
 
   useEffect(() => {
     let index = 0;
