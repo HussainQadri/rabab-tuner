@@ -21,7 +21,7 @@ class StringInstrument(Instrument):
 
 
 class RababString:
-    def __init__(self, note, freq, tolerance=1.5):
+    def __init__(self, note, freq, tolerance=5):
         self.note = note
         self.freq = freq
         self.tolerance = tolerance
