@@ -14,10 +14,6 @@ body, html, #root {
   100% { background-position: 0% 50%; }
 }
 
-
-
-
-
 .App {
   display: flex;
   justify-content: center;
@@ -33,17 +29,20 @@ body, html, #root {
   justify-content: center;
   align-items: center;
   text-align: center;
-  gap: 1.8rem;
+  gap: 1.5rem;
+  padding: 0 1.5rem;
 }
 
 .typed-text {
-  font-size: 2.4rem;
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  line-height: 1.3;
   font-weight: 700;
-  background: linear-gradient(90deg,#60a5fa,#a78bfa,#f472b6);
+  background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 20px rgba(147,197,253,0.15);
-  white-space: pre;
+  text-shadow: 0 0 20px rgba(147, 197, 253, 0.15);
+  word-break: break-word;
+  max-width: 90%;
 }
 
 .cursor {
@@ -55,18 +54,18 @@ body, html, #root {
 @keyframes blink { 50% { opacity: 0; } }
 
 .landing button {
+  width: clamp(140px, 60%, 220px);
+  padding: 12px 0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
   background: #3b82f6;
   border: none;
-  padding: 12px 30px;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  font-weight: 500;
-  cursor: pointer;
-  color: white;
-  transition: transform 0.2s ease, background 0.3s ease;
-  box-shadow: 0 0 10px rgba(59,130,246,0.4);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
   opacity: 0;
   transform: translateY(20px);
+  transition: transform 0.2s ease, background 0.3s ease;
 }
 .landing button:hover {
   background: #2563eb;
@@ -74,13 +73,11 @@ body, html, #root {
 }
 
 .github-link {
-  display: flex;
-  justify-content: center;
-  color: #9ca3af;
-  text-decoration: none;
-  transition: color 0.3s, transform 0.3s;
+  margin-top: 1rem;
   opacity: 0;
   transform: translateY(20px);
+  color: #9ca3af;
+  transition: color 0.3s, transform 0.3s;
 }
 .github-link:hover {
   color: #3b82f6;
@@ -102,4 +99,14 @@ body, html, #root {
 .tuner-text {
   margin-top: 1rem;
   color: #9ca3af;
+}
+
+@media (max-height: 600px) {
+  .landing {
+    justify-content: flex-start;
+    padding-top: 5rem;
+  }
+  .typed-text {
+    font-size: clamp(1.2rem, 5vw, 2rem);
+  }
 }
