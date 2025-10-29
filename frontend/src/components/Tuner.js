@@ -1,0 +1,107 @@
+import React, { useEffect, useRef, useState } from "react";
+
+export default function Tuner() {
+  const canvasRef = useRef(null);
+  const recorderRef = useRef(null);
+  const [result, setResult] = useState("Listening...");
+  const [streamRef, setStreamRef] = useState(null);
+
+  // draw rainbow waveform
+  useEffect(() => {
+    const setupWave = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setStreamRef(stream);
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+
+      const canvas = canvasRef.current;
+      const c = canvas.getContext("2d");
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      let hue = 0;
+
+      const draw = () => {
+        requestAnimationFrame(draw);
+        analyser.getByteTimeDomainData(data);
+        c.fillStyle = "#0e1117";
+        c.fillRect(0, 0, canvas.width, canvas.height);
+        c.lineWidth = 2;
+        c.strokeStyle = `hsl(${hue}, 100%, 60%)`;
+        hue = (hue + 1) % 360;
+        c.beginPath();
+        const slice = canvas.width / analyser.frequencyBinCount;
+        let x = 0;
+        for (let i = 0; i < analyser.frequencyBinCount; i++) {
+          const v = data[i] / 128.0;
+          const y = (v * canvas.height) / 2;
+          if (i === 0) c.moveTo(x, y);
+          else c.lineTo(x, y);
+          x += slice;
+        }
+        c.lineTo(canvas.width, canvas.height / 2);
+        c.stroke();
+      };
+      draw();
+    };
+
+    setupWave();
+  }, []);
+
+  // handle one-second recording chunks
+  useEffect(() => {
+    if (!streamRef) return;
+    let intervalId;
+
+    const startChunk = () => {
+      const recorder = new MediaRecorder(streamRef, { mimeType: "audio/webm;codecs=opus" });
+      recorderRef.current = recorder;
+      const chunks = [];
+
+      recorder.ondataavailable = async (e) => {
+        chunks.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        const formData = new FormData();
+        formData.append("file", blob, "audio.webm");
+        formData.append("note", "Sa");
+
+        try {
+          const res = await fetch("http://127.0.0.1:5000/analyze", {
+            method: "POST",
+            body: formData,
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setResult(`${data.note} → ${data.detected_freq} Hz → ${data.status}`);
+          }
+        } catch {
+          setResult("Server error");
+        }
+      };
+
+      recorder.start();
+      setTimeout(() => {
+        if (recorder.state === "recording") recorder.stop();
+      }, 1000); // 1 second chunks
+    };
+
+    startChunk();
+    intervalId = setInterval(startChunk, 1200); // overlap a bit
+
+    return () => clearInterval(intervalId);
+  }, [streamRef]);
+
+  return (
+    <div
+      className="tuner"
+      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+    >
+      <canvas ref={canvasRef} width={400} height={150}></canvas>
+      <p className="tuner-text" style={{ marginTop: "1rem" }}>{result}</p>
+    </div>
+  );
+}

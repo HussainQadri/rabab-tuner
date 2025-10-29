@@ -1,0 +1,105 @@
+body, html, #root {
+  margin: 0;
+  height: 100%;
+  font-family: "Inter", sans-serif;
+  background: linear-gradient(-45deg, #000, #0a0a0a, #1a1a1a, #000);
+  background-size: 400% 400%;
+  animation: gradientMove 12s ease infinite;
+  color: #e5e7eb;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+
+
+
+.App {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.landing {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 1.8rem;
+}
+
+.typed-text {
+  font-size: 2.4rem;
+  font-weight: 700;
+  background: linear-gradient(90deg,#60a5fa,#a78bfa,#f472b6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 20px rgba(147,197,253,0.15);
+  white-space: pre;
+}
+
+.cursor {
+  color: #a78bfa;
+  margin-left: 2px;
+  font-weight: 500;
+  animation: blink 1s step-start infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.landing button {
+  background: #3b82f6;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: white;
+  transition: transform 0.2s ease, background 0.3s ease;
+  box-shadow: 0 0 10px rgba(59,130,246,0.4);
+  opacity: 0;
+  transform: translateY(20px);
+}
+.landing button:hover {
+  background: #2563eb;
+  transform: scale(1.05);
+}
+
+.github-link {
+  display: flex;
+  justify-content: center;
+  color: #9ca3af;
+  text-decoration: none;
+  transition: color 0.3s, transform 0.3s;
+  opacity: 0;
+  transform: translateY(20px);
+}
+.github-link:hover {
+  color: #3b82f6;
+  transform: scale(1.1);
+}
+
+.tuner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tuner canvas {
+  border-radius: 10px;
+  background: rgba(17, 24, 39, 0.9);
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+}
+
+.tuner-text {
+  margin-top: 1rem;
+  color: #9ca3af;
+}
