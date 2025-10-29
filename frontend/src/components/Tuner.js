@@ -2,11 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 
 export default function Tuner() {
   const canvasRef = useRef(null);
-  const recorderRef = useRef(null);
   const [result, setResult] = useState("Listening...");
   const [streamRef, setStreamRef] = useState(null);
 
-  // draw rainbow waveform
   useEffect(() => {
     const setupWave = async () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -49,20 +47,18 @@ export default function Tuner() {
     setupWave();
   }, []);
 
-  // handle one-second recording chunks
   useEffect(() => {
     if (!streamRef) return;
-    let intervalId;
 
-    const startChunk = () => {
+    let isRunning = true;
+
+    const recordAndSend = async () => {
+      if (!isRunning) return;
+
       const recorder = new MediaRecorder(streamRef, { mimeType: "audio/webm;codecs=opus" });
-      recorderRef.current = recorder;
       const chunks = [];
 
-      recorder.ondataavailable = async (e) => {
-        chunks.push(e.data);
-      };
-
+      recorder.ondataavailable = (e) => chunks.push(e.data);
       recorder.onstop = async () => {
         const blob = new Blob(chunks, { type: "audio/webm" });
         const formData = new FormData();
@@ -71,29 +67,33 @@ export default function Tuner() {
 
         try {
           const res = await fetch("https://rabab-tuner.onrender.com/analyze", {
-
             method: "POST",
             body: formData,
           });
           if (res.ok) {
             const data = await res.json();
             setResult(`${data.note} → ${data.detected_freq} Hz → ${data.status}`);
+          } else {
+            setResult("Server error");
           }
         } catch {
           setResult("Server error");
         }
+
+        if (isRunning) setTimeout(recordAndSend, 1500);
       };
 
       recorder.start();
       setTimeout(() => {
         if (recorder.state === "recording") recorder.stop();
-      }, 1000); // 1 second chunks
+      }, 1000);
     };
 
-    startChunk();
-    intervalId = setInterval(startChunk, 1200); // overlap a bit
+    recordAndSend();
 
-    return () => clearInterval(intervalId);
+    return () => {
+      isRunning = false;
+    };
   }, [streamRef]);
 
   return (
