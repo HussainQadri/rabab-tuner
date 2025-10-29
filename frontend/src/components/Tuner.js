@@ -2,13 +2,20 @@ import React, { useEffect, useRef, useState } from "react";
 
 export default function Tuner() {
   const canvasRef = useRef(null);
-  const [result, setResult] = useState("Listening...");
+  const [detectedFreq, setDetectedFreq] = useState(null);
+  const [status, setStatus] = useState("Listening...");
+  const [color, setColor] = useState("#9ca3af");
   const [streamRef, setStreamRef] = useState(null);
+
+  const notes = ["Sa", "Re", "Ga", "Ma", "Pa", "Dha", "Ni", "Sa (upper)"];
+  const frequencies = [261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88, 523.25];
+  const [selectedNote, setSelectedNote] = useState("Sa");
 
   useEffect(() => {
     const setupWave = async () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setStreamRef(stream);
+
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
@@ -18,28 +25,26 @@ export default function Tuner() {
       const canvas = canvasRef.current;
       const c = canvas.getContext("2d");
       const data = new Uint8Array(analyser.frequencyBinCount);
-      let hue = 0;
 
       const draw = () => {
         requestAnimationFrame(draw);
-        analyser.getByteTimeDomainData(data);
-        c.fillStyle = "#0e1117";
-        c.fillRect(0, 0, canvas.width, canvas.height);
-        c.lineWidth = 2;
-        c.strokeStyle = `hsl(${hue}, 100%, 60%)`;
-        hue = (hue + 1) % 360;
-        c.beginPath();
-        const slice = canvas.width / analyser.frequencyBinCount;
+        analyser.getByteFrequencyData(data);
+
+        const w = canvas.width;
+        const h = canvas.height;
+        const barWidth = (w / data.length) * 2.5;
         let x = 0;
-        for (let i = 0; i < analyser.frequencyBinCount; i++) {
-          const v = data[i] / 128.0;
-          const y = (v * canvas.height) / 2;
-          if (i === 0) c.moveTo(x, y);
-          else c.lineTo(x, y);
-          x += slice;
+
+        c.fillStyle = "#0e1117";
+        c.fillRect(0, 0, w, h);
+
+        for (let i = 0; i < data.length; i++) {
+          const barHeight = (data[i] / 255) * h;
+          const hue = 200 + (barHeight / h) * 160;
+          c.fillStyle = `hsl(${hue}, 100%, 60%)`;
+          c.fillRect(x, h - barHeight, barWidth, barHeight);
+          x += barWidth + 1;
         }
-        c.lineTo(canvas.width, canvas.height / 2);
-        c.stroke();
       };
       draw();
     };
@@ -49,7 +54,6 @@ export default function Tuner() {
 
   useEffect(() => {
     if (!streamRef) return;
-
     let isRunning = true;
 
     const recordAndSend = async () => {
@@ -63,7 +67,7 @@ export default function Tuner() {
         const blob = new Blob(chunks, { type: "audio/webm" });
         const formData = new FormData();
         formData.append("file", blob, "audio.webm");
-        formData.append("note", "Sa");
+        formData.append("note", selectedNote);
 
         try {
           const res = await fetch("https://rabab-tuner.onrender.com/analyze", {
@@ -72,12 +76,28 @@ export default function Tuner() {
           });
           if (res.ok) {
             const data = await res.json();
-            setResult(`${data.note} → ${data.detected_freq} Hz → ${data.status}`);
+            setDetectedFreq(data.detected_freq);
+
+            if (data.status.includes("In tune")) {
+              setColor("#22c55e");
+              setStatus("Perfectly in tune ");
+            } else if (data.status.includes("Flat")) {
+              setColor("#3b82f6");
+              setStatus("Tune up");
+            } else if (data.status.includes("Sharp")) {
+              setColor("#ef4444");
+              setStatus("Tune down");
+            } else {
+              setColor("#9ca3af");
+              setStatus("Listening...");
+            }
           } else {
-            setResult("Server error");
+            setColor("#9ca3af");
+            setStatus("Server error");
           }
         } catch {
-          setResult("Server error");
+          setColor("#9ca3af");
+          setStatus("Server error");
         }
 
         if (isRunning) setTimeout(recordAndSend, 1500);
@@ -90,19 +110,79 @@ export default function Tuner() {
     };
 
     recordAndSend();
-
     return () => {
       isRunning = false;
     };
-  }, [streamRef]);
+  }, [streamRef, selectedNote]);
 
   return (
     <div
       className="tuner"
-      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
     >
+      <div
+        style={{
+          display: "flex",
+          gap: "0.5rem",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          marginBottom: "1rem",
+        }}
+      >
+        {notes.map((n) => (
+          <button
+            key={n}
+            onClick={() => setSelectedNote(n)}
+            style={{
+              padding: "6px 10px",
+              borderRadius: "6px",
+              border: "none",
+              cursor: "pointer",
+              background: selectedNote === n ? "#3b82f6" : "#1f2937",
+              color: "#e5e7eb",
+              fontWeight: 500,
+            }}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+
       <canvas ref={canvasRef} width={400} height={150}></canvas>
-      <p className="tuner-text" style={{ marginTop: "1rem" }}>{result}</p>
+
+      <div
+        style={{
+          textAlign: "center",
+          marginTop: "1.5rem",
+          transition: "color 0.4s ease",
+          color,
+        }}
+      >
+        <div style={{ fontSize: "1rem", opacity: 0.8 }}>Tuning: {selectedNote}</div>
+        <div style={{ fontSize: "1rem", opacity: 0.8 }}>Target: {frequencies[notes.indexOf(selectedNote)]}</div>
+        <div style={{ fontSize: "1.1rem", opacity: 0.8 }}>{status}</div>
+        {detectedFreq && (
+          <div style={{ fontSize: "1.8rem", fontWeight: 600, marginTop: "0.4rem" }}>
+            {detectedFreq} Hz
+          </div>
+        )}
+        <div
+          style={{
+            width: "140px",
+            height: "4px",
+            background: color,
+            borderRadius: "2px",
+            margin: "10px auto 0",
+            boxShadow: `0 0 12px ${color}80`,
+            transition: "background 0.3s, box-shadow 0.3s",
+          }}
+        ></div>
+      </div>
     </div>
   );
 }
