@@ -27,20 +27,23 @@ print(f"[DEBUG] Using ffmpeg at: {ffmpeg_path}")
 print(f"[DEBUG] Using ffprobe at: {ffprobe_path}")
 
 
-
 app = Flask(__name__)
 CORS(app)
 
-rabab = StringInstrument("Rabab", [
-    RababString("Sa", 261.63),
-    RababString("Re", 293.66),
-    RababString("Ga", 329.63),
-    RababString("Ma", 349.23),
-    RababString("Pa", 392.00),
-    RababString("Dha", 440.00),
-    RababString("Ni", 493.88),
-    RababString("Sa (upper)", 523.25),
-])
+rabab = StringInstrument(
+    "Rabab",
+    [
+        RababString("Sa", 261.63),
+        RababString("Re", 293.66),
+        RababString("Ga", 329.63),
+        RababString("Ma", 349.23),
+        RababString("Pa", 392.00),
+        RababString("Dha", 440.00),
+        RababString("Ni", 493.88),
+        RababString("Sa (upper)", 523.25),
+    ],
+)
+
 
 @app.route("/analyze", methods=["POST"])
 def analyze_audio():
@@ -58,17 +61,21 @@ def analyze_audio():
     try:
         detector = FrequencyDetector()
         detected_freq = detector.detect_from_blob(content)
-        status = target_string.tuning_status(detected_freq)
+        result = target_string.tuning_status(detected_freq)
 
-        return jsonify({
-            "note": note,
-            "target_freq": target_string.freq,
-            "detected_freq": round(detected_freq, 2),
-            "status": status
-        })
+        return jsonify(
+            {
+                "note": note,
+                "target_freq": target_string.freq,
+                "detected_freq": round(detected_freq, 2),
+                "status": result["status"],
+                "cents": result["cents"],
+            }
+        )
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)

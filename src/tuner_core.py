@@ -28,12 +28,14 @@ class RababString:
 
     def tuning_status(self, detected_freq):
         difference = detected_freq - self.freq
+        cents = 1200 * np.log2(detected_freq / self.freq) if detected_freq > 0 else 0
         if abs(difference) <= self.tolerance:
-            return "In tune."
+            status = "In tune."
         elif difference < 0:
-            return "Flat, tune up."
+            status = "Flat, tune up."
         else:
-            return "Sharp, tune down."
+            status = "Sharp, tune down."
+        return {"status": status, "cents": round(cents, 1)}
 
 
 class FrequencyDetector:

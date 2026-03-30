@@ -1,115 +1,232 @@
-body, html, #root {
-  margin: 0;
-  height: 100%;
-  font-family: "Inter", sans-serif;
-  background: linear-gradient(-45deg, #000, #0a0a0a, #1a1a1a, #000);
-  background-size: 400% 400%;
-  animation: gradientMove 12s ease infinite;
-  color: #e5e7eb;
-}
-
-@keyframes gradientMove {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+body,
+html,
+#root {
+    margin: 0;
+    height: 100%;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0a0b0f;
+    color: #e5e7eb;
+    -webkit-font-smoothing: antialiased;
 }
 
 .App {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
 }
 
-.landing {
-  height: 100vh;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  gap: 1.5rem;
-  padding: 0 1.5rem;
+/* ── Layout ── */
+
+.tuner-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 420px;
+    padding: 1rem 1.5rem 2rem;
+    box-sizing: border-box;
+    min-height: 100vh;
+    justify-content: space-between;
 }
 
-.typed-text {
-  font-size: clamp(1.6rem, 6vw, 2.4rem);
-  line-height: 1.3;
-  font-weight: 700;
-  background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 20px rgba(147,197,253,0.15);
-  white-space: nowrap;
+/* ── Header ── */
+
+.tuner-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
 }
 
-
-
-
-
-.cursor {
-  color: #a78bfa;
-  margin-left: 2px;
-  font-weight: 500;
-  animation: blink 1s step-start infinite;
-}
-@keyframes blink { 50% { opacity: 0; } }
-
-.landing button {
-  width: clamp(140px, 60%, 220px);
-  padding: 12px 0;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  background: #3b82f6;
-  border: none;
-  color: #fff;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
-  opacity: 0;
-  transform: translateY(20px);
-  transition: transform 0.2s ease, background 0.3s ease;
-}
-.landing button:hover {
-  background: #2563eb;
-  transform: scale(1.05);
+.tuner-brand {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b7280;
 }
 
-.github-link {
-  margin-top: 1rem;
-  opacity: 0;
-  transform: translateY(20px);
-  color: #9ca3af;
-  transition: color 0.3s, transform 0.3s;
-}
-.github-link:hover {
-  color: #3b82f6;
-  transform: scale(1.1);
+.github-icon {
+    color: #4b5563;
+    transition: color 0.2s;
+    text-decoration: none;
 }
 
-.tuner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.github-icon:hover {
+    color: #9ca3af;
 }
 
-.tuner canvas {
-  border-radius: 10px;
-  background: rgba(17, 24, 39, 0.9);
-  box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+/* ── Gauge ── */
+
+.gauge-container {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    margin-top: 1rem;
+    transition: filter 0.4s ease;
 }
 
-.tuner-text {
-  margin-top: 1rem;
-  color: #9ca3af;
+.gauge-glow {
+    filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.25));
 }
 
-@media (max-height: 600px) {
-  .landing {
-    justify-content: flex-start;
-    padding-top: 5rem;
-  }
-  .typed-text {
-    font-size: clamp(1.2rem, 5vw, 2rem);
-  }
+.gauge-svg {
+    width: 100%;
+    height: auto;
+}
+
+.gauge-note {
+    position: absolute;
+    bottom: -19px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: color 0.3s ease;
+}
+
+/* ── Info Section ── */
+
+.tuner-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.status-badge {
+    padding: 0.3rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid;
+    transition: all 0.3s ease;
+}
+
+.freq-display {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #d1d5db;
+    font-variant-numeric: tabular-nums;
+}
+
+.freq-target {
+    color: #4b5563;
+    font-size: 0.9rem;
+}
+
+.cents-display {
+    font-size: 1.6rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.3s ease;
+}
+
+/* ── String Selector ── */
+
+.string-selector {
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.string-selector-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #4b5563;
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.strings-row {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    width: 100%;
+}
+
+.string-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 0.25rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-radius: 8px;
+}
+
+.string-btn:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.string-line-container {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.string-line {
+    width: 2px;
+    height: 100%;
+    background: #374151;
+    border-radius: 1px;
+    transition: all 0.2s ease;
+}
+
+.string-line-active {
+    width: 3px;
+    background: #3b82f6;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.string-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9ca3af;
+    transition: color 0.2s;
+}
+
+.string-btn-active .string-label {
+    color: #3b82f6;
+}
+
+.string-freq {
+    font-size: 0.6rem;
+    color: #4b5563;
+    font-variant-numeric: tabular-nums;
+}
+
+.string-btn-active .string-freq {
+    color: #6b7280;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 380px) {
+    .gauge-note {
+        font-size: 1.8rem;
+    }
+
+    .string-label {
+        font-size: 0.65rem;
+    }
+}
+
+@media (min-height: 800px) {
+    .tuner-container {
+        justify-content: center;
+        gap: 1.5rem;
+    }
 }
