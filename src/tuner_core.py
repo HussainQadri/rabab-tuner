@@ -40,6 +40,21 @@ class FrequencyDetector:
     def __init__(self):
         pass
 
+    def prepare_audio(self, audio_blob):
+        audio = AudioSegment.from_file(io.BytesIO(audio_blob))
+
+        audio = audio.set_channels(1)
+
+        sample_rate = audio.frame_rate
+        samples = np.array(audio.get_array_of_samples()).astype(np.float64)
+
+        max_val = float(2 ** (audio.sample_width * 8 - 1))
+        samples = samples / max_val
+
+        samples = samples - np.mean(samples)
+
+        return samples, sample_rate
+
     def detect_from_blob(self, audio_blob):
         audio = AudioSegment.from_file(io.BytesIO(audio_blob))
         samples = np.array(audio.get_array_of_samples()).astype(np.float32)
