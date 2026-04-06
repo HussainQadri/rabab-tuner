@@ -2,7 +2,7 @@
 
 A web-based chromatic tuner built specifically for the [Rabab](https://en.wikipedia.org/wiki/Rubab_(instrument)) — a traditional stringed instrument from Afghanistan and surrounding regions. Select a note on the interactive wireframe, play your string, and get real-time pitch feedback with cent-accurate precision.
 
-**Live app:** [rabab-tuner.onrender.com](https://rabab-tuner.onrender.com)
+**Live app:** [rabab-tuner.vercel.app](https://rabab-tuner.vercel.app/)
 
 ## How It Works
 
