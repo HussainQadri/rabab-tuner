@@ -3,4 +3,4 @@ flask-cors
 pydub
 gunicorn
 numpy
-gunicorn
+scipy

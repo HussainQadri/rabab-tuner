@@ -41,7 +41,7 @@ def parabolic_interpolation(cmndf_vals, tau):
     return tau + peak
 
 
-def yin(signal, sample_rate, W=None, threshold=0.15, freq_max=600, freq_min=200):
+def compute_yin(signal, sample_rate, W=None, threshold=0.15, freq_max=600, freq_min=200):
     if W is None:
         W = int(sample_rate / freq_min) * 4
     tau_min = max(2, int(sample_rate / freq_max))
