@@ -1,4 +1,6 @@
 import numpy as np
+from scipy.signal import butter, sosfilt
+from src.yin import compute_yin
 from pydub import AudioSegment
 import io
 
@@ -42,12 +44,25 @@ class FrequencyDetector:
     def __init__(self):
         pass
 
-    def detect_from_blob(self, audio_blob):
+    def prepare_audio(self, audio_blob):
         audio = AudioSegment.from_file(io.BytesIO(audio_blob))
-        samples = np.array(audio.get_array_of_samples()).astype(np.float32)
-        samplerate = audio.frame_rate
-        windowed = samples * np.hanning(len(samples))
-        spectrum = np.fft.rfft(windowed)
-        freqs = np.fft.rfftfreq(len(windowed), 1 / samplerate)
-        detected = freqs[np.argmax(np.abs(spectrum))]
-        return detected
+
+        audio = audio.set_channels(1)
+
+        sample_rate = audio.frame_rate
+        samples = np.array(audio.get_array_of_samples()).astype(np.float64)
+
+        max_val = float(2 ** (audio.sample_width * 8 - 1))
+        samples = samples / max_val
+
+        samples = samples - np.mean(samples)
+
+        sos = butter(4, 200, btype='high', fs=sample_rate, output='sos')
+        samples = sosfilt(sos, samples)
+
+        return samples, sample_rate
+
+    def detect_from_blob(self, audio_blob):
+        samples, samplerate = self.prepare_audio(audio_blob)
+        frequency = compute_yin(samples, samplerate, W=None, threshold=0.15, freq_max=600, freq_min=200)
+        return frequency
