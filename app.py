@@ -61,6 +61,10 @@ def analyze_audio():
     try:
         detector = FrequencyDetector()
         detected_freq = detector.detect_from_blob(content)
+
+        if detected_freq is None:
+            return jsonify({"status": "silence"})
+
         result = target_string.tuning_status(detected_freq)
 
         return jsonify(

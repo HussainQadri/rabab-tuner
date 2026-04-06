@@ -64,5 +64,8 @@ class FrequencyDetector:
 
     def detect_from_blob(self, audio_blob):
         samples, samplerate = self.prepare_audio(audio_blob)
+        rms = np.sqrt(np.mean(samples ** 2))
+        if rms < 0.01:
+            return None
         frequency = compute_yin(samples, samplerate, W=None, threshold=0.15, freq_max=600, freq_min=200)
         return frequency
