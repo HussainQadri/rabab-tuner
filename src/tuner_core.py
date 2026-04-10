@@ -57,15 +57,33 @@ class FrequencyDetector:
 
         samples = samples - np.mean(samples)
 
-        sos = butter(4, 200, btype='high', fs=sample_rate, output='sos')
+        sos = butter(4, 200, btype="high", fs=sample_rate, output="sos")
         samples = sosfilt(sos, samples)
 
         return samples, sample_rate
 
     def detect_from_blob(self, audio_blob):
         samples, samplerate = self.prepare_audio(audio_blob)
-        rms = np.sqrt(np.mean(samples ** 2))
+        rms = np.sqrt(np.mean(samples**2))
         if rms < 0.01:
             return None
-        frequency = compute_yin(samples, samplerate, W=None, threshold=0.15, freq_max=600, freq_min=200)
+        frequency = compute_yin(
+            samples, samplerate, W=None, threshold=0.15, freq_max=600, freq_min=200
+        )
+        return frequency
+
+    def detect_from_pcm(self, samples_f32, sample_rate):
+        samples = samples_f32.astype(np.float64)
+        samples = samples - np.mean(samples)
+
+        sos = butter(4, 200, btype="high", fs=sample_rate, output="sos")
+        samples = sosfilt(sos, samples)
+
+        rms = np.sqrt(np.mean(samples**2))
+        if rms < 0.01:
+            return None
+
+        frequency = compute_yin(
+            samples, sample_rate, W=None, threshold=0.15, freq_max=600, freq_min=200
+        )
         return frequency

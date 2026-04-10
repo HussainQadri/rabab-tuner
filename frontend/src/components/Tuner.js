@@ -1,4 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { io } from "socket.io-client";
+
+const BACKEND_URL =
+  process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
 const NOTES = [
   { name: "Sa", freq: 261.63 },
@@ -145,69 +149,123 @@ function GaugeMeter({ cents, inTune }) {
 export default function Tuner() {
   const [detectedFreq, setDetectedFreq] = useState(null);
   const [cents, setCents] = useState(null);
-  const [status, setStatus] = useState("listening");
-  const [streamRef, setStreamRef] = useState(null);
+  const [status, setStatus] = useState("connecting");
   const [selectedIdx, setSelectedIdx] = useState(0);
   const selectedNote = NOTES[selectedIdx];
-  const isRunningRef = useRef(true);
 
+  const socketRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const workletNodeRef = useRef(null);
+  const streamRef = useRef(null);
+  const seqRef = useRef(0);
+  const selectedNoteRef = useRef(selectedNote.name);
+
+  // Keep the ref in sync with state for use in the socket callback
   useEffect(() => {
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(setStreamRef);
-    return () => { isRunningRef.current = false; };
+    selectedNoteRef.current = selectedNote.name;
+  }, [selectedNote.name]);
+
+  const startAudio = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
+
+      await audioContext.audioWorklet.addModule("/pcm-processor.js");
+
+      const source = audioContext.createMediaStreamSource(stream);
+      const workletNode = new AudioWorkletNode(audioContext, "pcm-processor");
+      workletNodeRef.current = workletNode;
+
+      // Connect Socket.IO
+      const socket = io(BACKEND_URL, {
+        transports: ["websocket"],
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: Infinity,
+      });
+      socketRef.current = socket;
+
+      socket.on("connect", () => {
+        socket.emit("setup", { sampleRate: audioContext.sampleRate });
+        socket.emit("set_note", { note: selectedNoteRef.current });
+        setStatus("listening");
+      });
+
+      socket.on("disconnect", () => {
+        setStatus("connecting");
+      });
+
+      socket.on("result", (data) => {
+        // Discard stale responses
+        if (data.seq !== seqRef.current) return;
+
+        if (data.status === "silence") {
+          setStatus("listening");
+          setDetectedFreq(null);
+          setCents(null);
+          return;
+        }
+
+        if (data.status === "error") {
+          setStatus("error");
+          return;
+        }
+
+        setDetectedFreq(data.detected_freq);
+        setCents(data.cents);
+
+        if (data.status.includes("In tune")) {
+          setStatus("in_tune");
+        } else if (data.status.includes("Flat")) {
+          setStatus("flat");
+        } else if (data.status.includes("Sharp")) {
+          setStatus("sharp");
+        } else {
+          setStatus("listening");
+        }
+      });
+
+      // Forward PCM chunks from worklet to server
+      workletNode.port.onmessage = (e) => {
+        if (socket.connected) {
+          seqRef.current += 1;
+          socket.emit("audio_data", {
+            seq: seqRef.current,
+            data: e.data.buffer,
+          });
+        }
+      };
+
+      source.connect(workletNode);
+      workletNode.connect(audioContext.destination);
+    } catch (err) {
+      console.error("Audio setup failed:", err);
+      setStatus("error");
+    }
   }, []);
 
-  const recordAndSend = useCallback(async () => {
-    if (!streamRef || !isRunningRef.current) return;
-
-    const recorder = new MediaRecorder(streamRef, { mimeType: "audio/webm;codecs=opus" });
-    const chunks = [];
-
-    recorder.ondataavailable = (e) => chunks.push(e.data);
-    recorder.onstop = async () => {
-      const blob = new Blob(chunks, { type: "audio/webm" });
-      const formData = new FormData();
-      formData.append("file", blob, "audio.webm");
-      formData.append("note", selectedNote.name);
-
-      try {
-        const res = await fetch("https://rabab-tuner.onrender.com/analyze", {
-          method: "POST",
-          body: formData,
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setDetectedFreq(data.detected_freq);
-          setCents(data.cents);
-
-          if (data.status.includes("In tune")) {
-            setStatus("in_tune");
-          } else if (data.status.includes("Flat")) {
-            setStatus("flat");
-          } else if (data.status.includes("Sharp")) {
-            setStatus("sharp");
-          } else {
-            setStatus("listening");
-          }
-        }
-      } catch {
-        setStatus("error");
-      }
-
-      if (isRunningRef.current) setTimeout(recordAndSend, 1500);
-    };
-
-    recorder.start();
-    setTimeout(() => {
-      if (recorder.state === "recording") recorder.stop();
-    }, 1000);
-  }, [streamRef, selectedNote.name]);
-
   useEffect(() => {
-    if (!streamRef) return;
-    isRunningRef.current = true;
-    recordAndSend();
-    return () => { isRunningRef.current = false; };
-  }, [streamRef, recordAndSend]);
+    startAudio();
+
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+      if (workletNodeRef.current) workletNodeRef.current.disconnect();
+      if (audioContextRef.current) audioContextRef.current.close();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, [startAudio]);
+
+  // Notify backend when the selected note changes
+  useEffect(() => {
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit("set_note", { note: selectedNote.name });
+    }
+  }, [selectedNote.name]);
 
   const inTune = status === "in_tune";
   const accentColor = inTune ? "#22c55e" : status === "flat" || status === "sharp" ? (Math.abs(cents || 0) < 15 ? "#eab308" : "#ef4444") : "#6b7280";
@@ -217,6 +275,7 @@ export default function Tuner() {
     status === "flat" ? "Tune Up" :
     status === "sharp" ? "Tune Down" :
     status === "error" ? "No Signal" :
+    status === "connecting" ? "Connecting..." :
     "Listening...";
 
   return (

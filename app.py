@@ -1,11 +1,13 @@
+import platform
+
+import numpy as np
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from pydub import AudioSegment
-from src.tuner_core import RababString, StringInstrument, FrequencyDetector
-import platform
-import os
+from flask_socketio import SocketIO, emit
 from pydub import AudioSegment
 from pydub.utils import which
+
+from src.tuner_core import RababString, StringInstrument, FrequencyDetector
 
 
 ffmpeg_path = which("ffmpeg")
@@ -30,6 +32,14 @@ print(f"[DEBUG] Using ffprobe at: {ffprobe_path}")
 app = Flask(__name__)
 CORS(app)
 
+socketio = SocketIO(
+    app,
+    cors_allowed_origins=[
+        "https://rabab-tuner.vercel.app",
+        "http://localhost:3000",
+    ],
+)
+
 rabab = StringInstrument(
     "Rabab",
     [
@@ -43,6 +53,86 @@ rabab = StringInstrument(
         RababString("Sa (upper)", 523.25),
     ],
 )
+
+detector = FrequencyDetector()
+
+# Per-socket session state
+client_state = {}
+
+
+@socketio.on("connect")
+def handle_connect():
+    client_state[request.sid] = {
+        "sample_rate": 44100,
+        "note": "Sa",
+        "processing": False,
+    }
+    print(f"[WS] Client connected: {request.sid}")
+
+
+@socketio.on("disconnect")
+def handle_disconnect():
+    client_state.pop(request.sid, None)
+    print(f"[WS] Client disconnected: {request.sid}")
+
+
+@socketio.on("setup")
+def handle_setup(data):
+    if request.sid in client_state:
+        client_state[request.sid]["sample_rate"] = data.get("sampleRate", 44100)
+
+
+@socketio.on("set_note")
+def handle_set_note(data):
+    if request.sid in client_state:
+        client_state[request.sid]["note"] = data.get("note", "Sa")
+
+
+@socketio.on("audio_data")
+def handle_audio_data(data):
+    sid = request.sid
+    state = client_state.get(sid)
+    if not state:
+        return
+
+    # Backpressure: drop frame if still processing previous one
+    if state["processing"]:
+        return
+    state["processing"] = True
+
+    try:
+        seq = data.get("seq", 0) if isinstance(data, dict) else 0
+        audio_bytes = data.get("data") if isinstance(data, dict) else data
+
+        samples = np.frombuffer(audio_bytes, dtype=np.float32)
+        sample_rate = state["sample_rate"]
+
+        detected_freq = detector.detect_from_pcm(samples, sample_rate)
+
+        if detected_freq is None:
+            emit("result", {"status": "silence", "seq": seq})
+            return
+
+        note_name = state["note"]
+        target_string = rabab.get_string_by_note(note_name)
+        if not target_string:
+            emit("result", {"status": "silence", "seq": seq})
+            return
+
+        result = target_string.tuning_status(detected_freq)
+
+        emit("result", {
+            "note": note_name,
+            "target_freq": target_string.freq,
+            "detected_freq": round(detected_freq, 2),
+            "status": result["status"],
+            "cents": result["cents"],
+            "seq": seq,
+        })
+    except Exception as e:
+        emit("result", {"status": "error", "error": str(e), "seq": 0})
+    finally:
+        state["processing"] = False
 
 
 @app.route("/analyze", methods=["POST"])
@@ -59,7 +149,6 @@ def analyze_audio():
         return jsonify({"error": "Invalid note"}), 400
 
     try:
-        detector = FrequencyDetector()
         detected_freq = detector.detect_from_blob(content)
 
         if detected_freq is None:
@@ -82,4 +171,4 @@ def analyze_audio():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app, debug=True)
