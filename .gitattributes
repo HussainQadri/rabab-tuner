@@ -1,0 +1,4 @@
+# Keep GitHub language stats focused on the Python tuner backend.
+frontend/** linguist-vendored
+package-lock.json linguist-generated
+frontend/package-lock.json linguist-generated
