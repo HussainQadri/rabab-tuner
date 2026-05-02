@@ -26,24 +26,6 @@ The tuner covers the full octave used in rabab tuning (sargam).
 | Ni | 493.88 |
 | Sa (upper) | 523.25 |
 
-## Architecture
-
-```
-rabab-tuner/
-├── app.py                  # Flask API server
-├── src/
-│   └── tuner_core.py       # Pitch detection & instrument models
-├── frontend/               # React 19 app (Create React App)
-│   └── src/
-│       ├── App.js
-│       └── components/
-│           ├── Tuner.js    # Main tuner UI (gauge, rabab selector, note picker)
-│           └── Landing.js  # Animated landing page
-├── requirements.txt        # Python dependencies
-├── Procfile                # Gunicorn config for deployment
-└── runtime.txt             # Python 3.11.9
-```
-
 
 ## Getting Started
 
